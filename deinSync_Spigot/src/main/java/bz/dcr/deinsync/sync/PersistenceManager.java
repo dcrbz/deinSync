@@ -45,8 +45,6 @@ public class PersistenceManager {
 
                     // Save profile to database
                     savePlayerProfileDirectly(profile);
-
-                    System.out.println("Saved profile of player " + profile.getPlayerId().toString() + ".");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -142,6 +140,9 @@ public class PersistenceManager {
      * @throws InterruptedException gets thrown when joining a worker {@link Thread} throws and Exception
      */
     public void close() {
+        // Log entry
+        plugin.getLogger().info("Saving players...");
+
         // Get all active workers
         final Set<Map.Entry<Long, Thread>> workers = new HashSet<>(activeWorkers.entrySet());
 
@@ -157,7 +158,7 @@ public class PersistenceManager {
 
             // Join worker thread
             try {
-                worker.getValue().join();
+                worker.getValue().join(3000L);
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
                 plugin.getLogger().warning("Failed to join worker thread #" + worker.getKey().toString() + "!");
