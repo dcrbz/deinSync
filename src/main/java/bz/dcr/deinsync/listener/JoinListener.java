@@ -23,13 +23,13 @@ public class JoinListener implements Listener {
 
         // No pending login
         if(!hasPendingLogin) {
-            plugin.getLogger().info("No pending login for " + event.getPlayer().getUniqueId().toString() + ".");
+            plugin.getLogManager().debug("No pending login for " + event.getPlayer().getUniqueId().toString() + ".");
             return;
         }
 
         // Load player data
         plugin.getSyncManager().loadPlayer(event.getPlayer());
-        plugin.getLogger().info("Successfully loaded profile for " + event.getPlayer().getUniqueId().toString() + ".");
+        plugin.getLogManager().debug("Successfully loaded profile for " + event.getPlayer().getUniqueId().toString() + ".");
     }
 
 }

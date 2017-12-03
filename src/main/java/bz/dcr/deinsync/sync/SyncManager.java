@@ -37,11 +37,11 @@ public class SyncManager {
         plugin.getBedRock().getRedis().subscribe(new BedRockSubscriber<PlayerProfileUpdateMessage>() {
             @Override
             public void onMessage(Message<PlayerProfileUpdateMessage> message) {
-                plugin.getLogger().info("Received PlayerProfileUpdateMessage");
+                plugin.getLogManager().debug("Received PlayerProfileUpdateMessage");
 
                 // Wrong server group
                 if(!message.getBody().getGroup().equals(getServerGroup())) {
-                    plugin.getLogger().info("Received profile update but group was invalid (" + message.getBody().getGroup() + ").");
+                    plugin.getLogManager().debug("Received profile update but group was invalid (" + message.getBody().getGroup() + ").");
                     return;
                 }
 
@@ -52,14 +52,14 @@ public class SyncManager {
 
                     // Player not online
                     if(player == null) {
-                        plugin.getLogger().info("The player " + message.getBody().getPlayerId().toString() + " is currently not online.");
+                        plugin.getLogManager().debug("The player " + message.getBody().getPlayerId().toString() + " is currently not online.");
                         return;
                     }
 
                     // Load profile and apply to player
                     loadPlayer(player);
 
-                    plugin.getLogger().info("Successfully loaded data of " + message.getBody().getPlayerId().toString() + "!");
+                    plugin.getLogManager().debug("Successfully loaded data of " + message.getBody().getPlayerId().toString() + "!");
                 });
             }
         }, MessageChannel.PLAYER_PROFILE_UPDATE);
@@ -68,7 +68,7 @@ public class SyncManager {
         plugin.getBedRock().getRedis().subscribe(new BedRockSubscriber<BungeeCordJoinEvent>() {
             @Override
             public void onMessage(Message<BungeeCordJoinEvent> message) {
-                plugin.getLogger().info("Player " + message.getBody().getPlayerId().toString() + " joined Proxy!");
+                plugin.getLogManager().debug("Player " + message.getBody().getPlayerId().toString() + " joined Proxy!");
                 pendingLogins.add(message.getBody().getPlayerId());
             }
         }, bz.dcr.bedrock.common.pubsub.MessageChannel.BUNGEECORD_JOIN_QUIT);
@@ -77,7 +77,7 @@ public class SyncManager {
         plugin.getBedRock().getRedis().subscribe(new BedRockSubscriber<ServerJoinEvent>() {
             @Override
             public void onMessage(Message<ServerJoinEvent> message) {
-                plugin.getLogger().info("Player " + message.getBody().getPlayerId().toString() + " joined server!");
+                plugin.getLogManager().debug("Player " + message.getBody().getPlayerId().toString() + " joined server!");
 
                 // Player joined on other server
                 if(Bukkit.getPlayer(message.getBody().getPlayerId()) == null) {
@@ -93,11 +93,11 @@ public class SyncManager {
 
         if(profile != null) {
             // Update existing profile
-            plugin.getLogger().info("Updating existing profile of " + player.getUniqueId().toString() + "...");
+            plugin.getLogManager().debug("Updating existing profile of " + player.getUniqueId().toString() + "...");
             profile = PlayerProfile.update(player, getServerGroup(), profile);
         } else {
             // Create new profile
-            plugin.getLogger().info("Creating new profile for " + player.getUniqueId().toString() + "...");
+            plugin.getLogManager().debug("Creating new profile for " + player.getUniqueId().toString() + "...");
             profile = createPlayerProfile(player);
         }
 
@@ -106,8 +106,12 @@ public class SyncManager {
     }
 
     public void loadPlayer(Player player) {
+        plugin.getLogManager().debug("Loading player...");
+
         final PlayerProfile profile = fetchOrCreatePlayerProfile(player);
         profile.apply(player);
+
+        plugin.getLogManager().debug("Applied player data.");
     }
 
 
@@ -115,9 +119,9 @@ public class SyncManager {
         PlayerProfile profile = fetchPlayerProfile(player.getUniqueId());
 
         if(profile != null) {
-            plugin.getLogger().info("Found player profile of " + player.getUniqueId().toString() + ".");
+            plugin.getLogManager().debug("Found player profile of " + player.getUniqueId().toString() + ".");
         } else {
-            plugin.getLogger().info("Creating new profile for " + player.getUniqueId().toString() + "...");
+            plugin.getLogManager().debug("Creating new profile for " + player.getUniqueId().toString() + "...");
             profile = createPlayerProfile(player);
         }
 
@@ -125,7 +129,8 @@ public class SyncManager {
     }
 
     public PlayerProfile fetchPlayerProfile(UUID playerId) {
-        final MongoCollection<PlayerProfile> collection = plugin.getMongo().getMongoDatabase().getCollection(PlayerProfile.COLLECTION_NAME, PlayerProfile.class);
+        final MongoCollection<PlayerProfile> collection = plugin.getMongo().getMongoDatabase()
+                .getCollection(PlayerProfile.COLLECTION_NAME, PlayerProfile.class);
 
         final PlayerProfile profile = collection.find(
                 Filters.and(

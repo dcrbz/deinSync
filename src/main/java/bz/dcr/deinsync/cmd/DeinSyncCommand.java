@@ -30,7 +30,7 @@ public class DeinSyncCommand implements CommandExecutor {
         // Update command
         if(args.length == 1 && args[0].equalsIgnoreCase("update")) {
             plugin.getSyncManager().loadPlayer(player);
-            player.sendMessage(ChatColor.GREEN + "Your profile has been successfully loaded!");
+            player.sendMessage(ChatColor.GREEN + "Your profile has been loaded successfully!");
             return true;
         }
 

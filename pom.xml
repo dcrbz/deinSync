@@ -11,7 +11,7 @@
     <repositories>
         <repository>
             <id>deincraft-repo</id>
-            <url>https://repo.dcr.bz/artifactory/deincraft-repo</url>
+            <url>https://repo.deincraft.bz/artifactory/deincraft-repo</url>
         </repository>
     </repositories>
 
@@ -26,7 +26,7 @@
         <dependency>
             <groupId>bz.dcr</groupId>
             <artifactId>dccore-spigot</artifactId>
-            <version>1.0.8</version>
+            <version>1.0.15</version>
             <scope>provided</scope>
         </dependency>
 

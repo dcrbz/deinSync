@@ -15,6 +15,7 @@ import bz.dcr.deinsync.db.codec.PlayerInventoryCodecProvider;
 import bz.dcr.deinsync.db.codec.PlayerProfileCodecProvider;
 import bz.dcr.deinsync.listener.JoinListener;
 import bz.dcr.deinsync.listener.QuitListener;
+import bz.dcr.deinsync.logging.LogManager;
 import bz.dcr.deinsync.sync.PersistenceManager;
 import bz.dcr.deinsync.sync.SyncManager;
 import com.mongodb.MongoClient;
@@ -28,6 +29,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class DeinSyncPlugin extends JavaPlugin {
 
+    private LogManager logManager;
+
     private Mongo mongoDB;
     private SyncManager syncManager;
     private PersistenceManager persistenceManager;
@@ -36,6 +39,8 @@ public class DeinSyncPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        logManager = new LogManager(this);
+
         loadBedRock();
         loadConfig();
         setupDatabase();
@@ -73,10 +78,10 @@ public class DeinSyncPlugin extends JavaPlugin {
 
         // bedRock is not installed
         if(bedRockPlugin == null) {
-            getLogger().warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            getLogger().warning("! Could not find bedRock! Disabling deinSync... !");
-            getLogger().warning("! INVENTORIES WILL NOT BE SYNCHRONIZED          !");
-            getLogger().warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            getLogManager().warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            getLogManager().warning("! Could not find bedRock! Disabling deinSync... !");
+            getLogManager().warning("! INVENTORIES WILL NOT BE SYNCHRONIZED          !");
+            getLogManager().warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -89,6 +94,7 @@ public class DeinSyncPlugin extends JavaPlugin {
         getConfig().addDefault(ConfigKey.DEINSYNC_SERVER_GROUP, "main");
         getConfig().addDefault(ConfigKey.MONGODB_URI, "mongodb://127.0.0.1:27017/" + getName().toLowerCase());
         getConfig().addDefault(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS, 2);
+        getConfig().addDefault(ConfigKey.DEINSYNC_DEBUG, false);
         getConfig().options().copyDefaults(true);
         saveConfig();
     }
@@ -113,14 +119,18 @@ public class DeinSyncPlugin extends JavaPlugin {
             mongoDB.connect();
         } catch (Exception ex) {
             ex.printStackTrace();
-            getLogger().warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            getLogger().warning("! Could not connect to MongoDB! Disabling deinSync... !");
-            getLogger().warning("! INVENTORIES WILL NOT BE SYNCHRONIZED                !");
-            getLogger().warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            getLogManager().warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            getLogManager().warning("! Could not connect to MongoDB! Disabling deinSync... !");
+            getLogManager().warning("! INVENTORIES WILL NOT BE SYNCHRONIZED                !");
+            getLogManager().warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             getServer().getPluginManager().disablePlugin(this);
         }
     }
 
+
+    public LogManager getLogManager() {
+        return logManager;
+    }
 
     public BedRockPlugin getBedRock() {
         return bedRock;

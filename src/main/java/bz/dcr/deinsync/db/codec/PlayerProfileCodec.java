@@ -44,11 +44,11 @@ public class PlayerProfileCodec implements Codec<PlayerProfile> {
         profile.setHealthScaled(reader.readBoolean("healthScaled"));
         profile.setHealthScale(reader.readDouble("healthScale"));
         profile.setFoodLevel(reader.readInt32("foodLevel"));
-        profile.setSaturation(new Float(reader.readDouble("saturation")));
-        profile.setExhaustion(new Float(reader.readDouble("exhaustion")));
-        profile.setExp(new Float(reader.readDouble("exp")));
+        profile.setSaturation((float) reader.readDouble("saturation"));
+        profile.setExhaustion((float) reader.readDouble("exhaustion"));
+        profile.setExp((float) reader.readDouble("exp"));
         profile.setLevel(reader.readInt32("level"));
-        profile.setFlySpeed(new Float(reader.readDouble("flySpeed")));
+        profile.setFlySpeed((float) reader.readDouble("flySpeed"));
         profile.setFireTicks(reader.readInt32("fireTicks"));
         profile.setGameMode(GameMode.valueOf(reader.readString("gameMode")));
 
