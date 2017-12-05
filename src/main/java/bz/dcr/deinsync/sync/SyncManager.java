@@ -87,6 +87,16 @@ public class SyncManager {
         }, bz.dcr.bedrock.common.pubsub.MessageChannel.SERVER_JOIN_QUIT);
     }
 
+    public void startSaveTask() {
+        final Long interval = plugin.getConfig().getLong(ConfigKey.DEINSYNC_SAVE_INTERVAL);
+
+        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+            plugin.getLogManager().info("Saving " + Bukkit.getOnlinePlayers().size() + " players...");
+            Bukkit.getOnlinePlayers().forEach(this::savePlayer);
+            plugin.getLogManager().info("Saved " + Bukkit.getOnlinePlayers().size() + " players.");
+        }, interval, interval);
+    }
+
 
     public void savePlayer(Player player) {
         PlayerProfile profile = fetchPlayerProfile(player.getUniqueId());

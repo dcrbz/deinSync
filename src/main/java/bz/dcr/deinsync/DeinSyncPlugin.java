@@ -14,6 +14,7 @@ import bz.dcr.deinsync.db.codec.PlayerInventoryCodec;
 import bz.dcr.deinsync.db.codec.PlayerInventoryCodecProvider;
 import bz.dcr.deinsync.db.codec.PlayerProfileCodecProvider;
 import bz.dcr.deinsync.listener.JoinListener;
+import bz.dcr.deinsync.listener.LockListener;
 import bz.dcr.deinsync.listener.QuitListener;
 import bz.dcr.deinsync.logging.LogManager;
 import bz.dcr.deinsync.sync.PersistenceManager;
@@ -28,6 +29,8 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class DeinSyncPlugin extends JavaPlugin {
+
+    public static final String LOCK_PLAYER_TAG = "deinsync_locked";
 
     private LogManager logManager;
 
@@ -47,12 +50,20 @@ public class DeinSyncPlugin extends JavaPlugin {
 
         syncManager = new SyncManager(this);
         syncManager.initSubscribers();
+        syncManager.startSaveTask();
         persistenceManager = new PersistenceManager(this);
         persistenceManager.addWorkers(getConfig().getInt(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS));
 
+        // Register event listeners
         getServer().getPluginManager().registerEvents(new JoinListener(this), this);
         getServer().getPluginManager().registerEvents(new QuitListener(this), this);
 
+        // Register lock listener
+        if (getConfig().getBoolean(ConfigKey.DEINSYNC_SECURITY_LOCK_ENABLED)) {
+            getServer().getPluginManager().registerEvents(new LockListener(), this);
+        }
+
+        // Register deinSync command
         getCommand("deinsync").setExecutor(new DeinSyncCommand(this));
     }
 
@@ -94,6 +105,9 @@ public class DeinSyncPlugin extends JavaPlugin {
         getConfig().addDefault(ConfigKey.DEINSYNC_SERVER_GROUP, "main");
         getConfig().addDefault(ConfigKey.MONGODB_URI, "mongodb://127.0.0.1:27017/" + getName().toLowerCase());
         getConfig().addDefault(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS, 2);
+        getConfig().addDefault(ConfigKey.DEINSYNC_SAVE_INTERVAL, 6000);
+        getConfig().addDefault(ConfigKey.DEINSYNC_SECURITY_LOCK_ENABLED, true);
+        getConfig().addDefault(ConfigKey.DEINSYNC_SECURITY_LOCK_DURATION, 40);
         getConfig().addDefault(ConfigKey.DEINSYNC_DEBUG, false);
         getConfig().options().copyDefaults(true);
         saveConfig();

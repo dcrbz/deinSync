@@ -9,6 +9,7 @@
     <version>1.0.0</version>
 
     <repositories>
+        <!-- deinCraft Repository -->
         <repository>
             <id>deincraft-repo</id>
             <url>https://repo.deincraft.bz/artifactory/deincraft-repo</url>
@@ -16,6 +17,7 @@
     </repositories>
 
     <dependencies>
+        <!-- Spigot API -->
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
@@ -23,6 +25,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- dcCore -->
         <dependency>
             <groupId>bz.dcr</groupId>
             <artifactId>dccore-spigot</artifactId>
@@ -30,6 +33,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- bedRock -->
         <dependency>
             <groupId>bz.dcr</groupId>
             <artifactId>bedrock-spigot</artifactId>
