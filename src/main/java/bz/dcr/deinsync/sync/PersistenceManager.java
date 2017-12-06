@@ -45,6 +45,10 @@ public class PersistenceManager {
 
                     // Save profile to database
                     savePlayerProfileDirectly(profile);
+
+                    // Print debug message
+                    plugin.getLogManager().debug("[Worker #" + Thread.currentThread().getId() +
+                            "] Saved profile " + profile.getPlayerId().toString() + ".");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -100,7 +104,8 @@ public class PersistenceManager {
      * @param profile The {@link PlayerProfile} to save
      */
     public void savePlayerProfile(PlayerProfile profile) {
-        this.profileQueue.offer(profile);
+        //this.profileQueue.offer(profile);
+        savePlayerProfileDirectly(profile);
     }
 
     /**

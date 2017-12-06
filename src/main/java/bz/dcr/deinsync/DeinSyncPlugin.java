@@ -13,12 +13,13 @@ import bz.dcr.deinsync.config.ConfigKey;
 import bz.dcr.deinsync.db.codec.PlayerInventoryCodec;
 import bz.dcr.deinsync.db.codec.PlayerInventoryCodecProvider;
 import bz.dcr.deinsync.db.codec.PlayerProfileCodecProvider;
-import bz.dcr.deinsync.listener.JoinListener;
 import bz.dcr.deinsync.listener.LockListener;
-import bz.dcr.deinsync.listener.QuitListener;
+import bz.dcr.deinsync.listener.packet.*;
 import bz.dcr.deinsync.logging.LogManager;
 import bz.dcr.deinsync.sync.PersistenceManager;
 import bz.dcr.deinsync.sync.SyncManager;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
@@ -39,6 +40,8 @@ public class DeinSyncPlugin extends JavaPlugin {
     private PersistenceManager persistenceManager;
     private BedRockPlugin bedRock;
 
+    private ProtocolManager protocolManager;
+
 
     @Override
     public void onEnable() {
@@ -47,20 +50,15 @@ public class DeinSyncPlugin extends JavaPlugin {
         loadBedRock();
         loadConfig();
         setupDatabase();
+        setupPacketManager();
 
         syncManager = new SyncManager(this);
-        syncManager.initSubscribers();
-        syncManager.startSaveTask();
         persistenceManager = new PersistenceManager(this);
         persistenceManager.addWorkers(getConfig().getInt(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS));
 
-        // Register event listeners
-        getServer().getPluginManager().registerEvents(new JoinListener(this), this);
-        getServer().getPluginManager().registerEvents(new QuitListener(this), this);
-
         // Register lock listener
         if (getConfig().getBoolean(ConfigKey.DEINSYNC_SECURITY_LOCK_ENABLED)) {
-            getServer().getPluginManager().registerEvents(new LockListener(), this);
+            getServer().getPluginManager().registerEvents(new LockListener(this), this);
         }
 
         // Register deinSync command
@@ -104,8 +102,7 @@ public class DeinSyncPlugin extends JavaPlugin {
         getConfig().addDefault(ConfigKey.DEINSYNC_SERVER_ID, "server_" + getServer().getPort());
         getConfig().addDefault(ConfigKey.DEINSYNC_SERVER_GROUP, "main");
         getConfig().addDefault(ConfigKey.MONGODB_URI, "mongodb://127.0.0.1:27017/" + getName().toLowerCase());
-        getConfig().addDefault(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS, 2);
-        getConfig().addDefault(ConfigKey.DEINSYNC_SAVE_INTERVAL, 6000);
+        getConfig().addDefault(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS, 4);
         getConfig().addDefault(ConfigKey.DEINSYNC_SECURITY_LOCK_ENABLED, true);
         getConfig().addDefault(ConfigKey.DEINSYNC_SECURITY_LOCK_DURATION, 40);
         getConfig().addDefault(ConfigKey.DEINSYNC_DEBUG, false);
@@ -141,6 +138,16 @@ public class DeinSyncPlugin extends JavaPlugin {
         }
     }
 
+    private void setupPacketManager() {
+        protocolManager = ProtocolLibrary.getProtocolManager();
+
+        protocolManager.addPacketListener(new EntityEffectPacketListener(this));
+        protocolManager.addPacketListener(new ExperiencePacketListener(this));
+        protocolManager.addPacketListener(new HealthPacketListener(this));
+        protocolManager.addPacketListener(new InventoryPacketListener(this));
+        protocolManager.addPacketListener(new GameModePacketListener(this));
+    }
+
 
     public LogManager getLogManager() {
         return logManager;
@@ -160,6 +167,10 @@ public class DeinSyncPlugin extends JavaPlugin {
 
     public PersistenceManager getPersistenceManager() {
         return persistenceManager;
+    }
+
+    public ProtocolManager getProtocolManager() {
+        return protocolManager;
     }
 
 }
