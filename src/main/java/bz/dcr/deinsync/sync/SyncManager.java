@@ -9,6 +9,7 @@ import bz.dcr.deinsync.config.ConfigKey;
 import bz.dcr.deinsync.player.PlayerProfile;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -43,8 +44,11 @@ public class SyncManager {
     public void loadPlayer(Player player) {
         plugin.getLogManager().debug("Loading player...");
 
+        // Get player profile
         final PlayerProfile profile = fetchOrCreatePlayerProfile(player);
-        profile.apply(player);
+
+        // Apply profile to player
+        Bukkit.getScheduler().runTask(plugin, () -> profile.apply(player));
 
         plugin.getLogManager().debug("Applied player data.");
     }

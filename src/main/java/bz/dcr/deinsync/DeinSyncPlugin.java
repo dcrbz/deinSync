@@ -13,6 +13,7 @@ import bz.dcr.deinsync.config.ConfigKey;
 import bz.dcr.deinsync.db.codec.PlayerInventoryCodec;
 import bz.dcr.deinsync.db.codec.PlayerInventoryCodecProvider;
 import bz.dcr.deinsync.db.codec.PlayerProfileCodecProvider;
+import bz.dcr.deinsync.listener.JoinListener;
 import bz.dcr.deinsync.listener.LockListener;
 import bz.dcr.deinsync.listener.packet.*;
 import bz.dcr.deinsync.logging.LogManager;
@@ -55,6 +56,9 @@ public class DeinSyncPlugin extends JavaPlugin {
         syncManager = new SyncManager(this);
         persistenceManager = new PersistenceManager(this);
         persistenceManager.addWorkers(getConfig().getInt(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS));
+
+        // Register event listeners
+        getServer().getPluginManager().registerEvents(new JoinListener(this), this);
 
         // Register lock listener
         if (getConfig().getBoolean(ConfigKey.DEINSYNC_SECURITY_LOCK_ENABLED)) {
