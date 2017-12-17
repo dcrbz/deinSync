@@ -13,7 +13,7 @@ import bz.dcr.deinsync.config.ConfigKey;
 import bz.dcr.deinsync.db.codec.PlayerInventoryCodec;
 import bz.dcr.deinsync.db.codec.PlayerInventoryCodecProvider;
 import bz.dcr.deinsync.db.codec.PlayerProfileCodecProvider;
-import bz.dcr.deinsync.listener.JoinListener;
+import bz.dcr.deinsync.listener.JoinQuitListener;
 import bz.dcr.deinsync.listener.LockListener;
 import bz.dcr.deinsync.listener.packet.*;
 import bz.dcr.deinsync.logging.LogManager;
@@ -30,9 +30,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class DeinSyncPlugin extends JavaPlugin {
 
     public static final String LOCK_PLAYER_TAG = "deinsync_locked";
+
+    private ExecutorService executorService;
 
     private LogManager logManager;
 
@@ -46,6 +51,8 @@ public class DeinSyncPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        executorService = Executors.newCachedThreadPool();
+
         logManager = new LogManager(this);
 
         loadBedRock();
@@ -58,7 +65,7 @@ public class DeinSyncPlugin extends JavaPlugin {
         persistenceManager.addWorkers(getConfig().getInt(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS));
 
         // Register event listeners
-        getServer().getPluginManager().registerEvents(new JoinListener(this), this);
+        getServer().getPluginManager().registerEvents(new JoinQuitListener(this), this);
 
         // Register lock listener
         if (getConfig().getBoolean(ConfigKey.DEINSYNC_SECURITY_LOCK_ENABLED)) {
@@ -152,6 +159,10 @@ public class DeinSyncPlugin extends JavaPlugin {
         protocolManager.addPacketListener(new GameModePacketListener(this));
     }
 
+
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
 
     public LogManager getLogManager() {
         return logManager;

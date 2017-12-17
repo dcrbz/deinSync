@@ -5,7 +5,6 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
-import org.bukkit.Bukkit;
 
 public class InventoryPacketListener extends PacketAdapter {
 
@@ -26,7 +25,7 @@ public class InventoryPacketListener extends PacketAdapter {
         }
 
         // Save player profile
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->
+        plugin.getExecutorService().execute(() ->
                 plugin.getSyncManager().savePlayer(event.getPlayer()));
     }
 }

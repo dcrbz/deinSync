@@ -5,7 +5,6 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
-import org.bukkit.Bukkit;
 
 public class HealthPacketListener extends PacketAdapter {
 
@@ -21,7 +20,7 @@ public class HealthPacketListener extends PacketAdapter {
     @Override
     public void onPacketSending(PacketEvent event) {
         // Save player profile
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->
+        plugin.getExecutorService().execute(() ->
                 plugin.getSyncManager().savePlayer(event.getPlayer()));
     }
 }
