@@ -23,7 +23,7 @@ public class JoinQuitListener implements Listener {
     }
 
     @EventHandler
-    public void onJoin(PlayerQuitEvent event) {
+    public void onQuit(PlayerQuitEvent event) {
         plugin.getExecutorService().execute(() ->
                 plugin.getSyncManager().savePlayer(event.getPlayer()));
     }

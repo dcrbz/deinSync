@@ -25,6 +25,11 @@ public class SyncManager {
 
 
     public void savePlayer(Player player) {
+        // Player is locked
+        if (player.hasMetadata(DeinSyncPlugin.LOCK_PLAYER_TAG)) {
+            return;
+        }
+
         PlayerProfile profile = fetchPlayerProfile(player.getUniqueId());
 
         if(profile != null) {

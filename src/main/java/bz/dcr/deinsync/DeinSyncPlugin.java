@@ -62,7 +62,6 @@ public class DeinSyncPlugin extends JavaPlugin {
 
         syncManager = new SyncManager(this);
         persistenceManager = new PersistenceManager(this);
-        persistenceManager.addWorkers(getConfig().getInt(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS));
 
         // Register event listeners
         getServer().getPluginManager().registerEvents(new JoinQuitListener(this), this);
@@ -78,13 +77,12 @@ public class DeinSyncPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        getLogger().info("Saving players...");
+
         // Save profiles of all remaining players
         Bukkit.getOnlinePlayers().forEach(player -> getSyncManager().savePlayer(player));
 
-        // Save remaining profiles and wait for workers to finish
-        if(persistenceManager != null) {
-            persistenceManager.close();
-        }
+        getLogger().info("Successfully saved players.");
 
         // Disconnect from database
         if(mongoDB != null) {
@@ -113,7 +111,6 @@ public class DeinSyncPlugin extends JavaPlugin {
         getConfig().addDefault(ConfigKey.DEINSYNC_SERVER_ID, "server_" + getServer().getPort());
         getConfig().addDefault(ConfigKey.DEINSYNC_SERVER_GROUP, "main");
         getConfig().addDefault(ConfigKey.MONGODB_URI, "mongodb://127.0.0.1:27017/" + getName().toLowerCase());
-        getConfig().addDefault(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS, 4);
         getConfig().addDefault(ConfigKey.DEINSYNC_SECURITY_LOCK_ENABLED, true);
         getConfig().addDefault(ConfigKey.DEINSYNC_SECURITY_LOCK_DURATION, 40);
         getConfig().addDefault(ConfigKey.DEINSYNC_DEBUG, false);
