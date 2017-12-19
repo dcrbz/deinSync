@@ -73,7 +73,7 @@ public class DeinSyncCommand implements CommandExecutor {
             });
         }
 
-        return false;
+        return true;
     }
 
 }
