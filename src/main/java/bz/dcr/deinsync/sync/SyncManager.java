@@ -1,5 +1,6 @@
 package bz.dcr.deinsync.sync;
 
+import bz.dcr.bedrock.common.pubsub.BedRockSubscriber;
 import bz.dcr.bedrock.common.pubsub.Message;
 import bz.dcr.bedrock.common.pubsub.MessageBuilder;
 import bz.dcr.deinsync.DeinSyncPlugin;
@@ -16,11 +17,36 @@ import java.util.UUID;
 
 public class SyncManager {
 
+    private static final String BEDROCK_PROFILE_UPDATE_CHANNEL = "DEINSYNC_PROFILE_UPDATE";
+
     private DeinSyncPlugin plugin;
 
 
     public SyncManager(DeinSyncPlugin plugin) {
         this.plugin = plugin;
+
+        registerMessageListeners();
+    }
+
+
+    private void registerMessageListeners() {
+        plugin.getBedRock().getRedis().subscribe(new BedRockSubscriber<PlayerProfileUpdateMessage>() {
+            @Override
+            public void onMessage(Message<PlayerProfileUpdateMessage> message) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    // Get player
+                    final Player player = Bukkit.getPlayer(message.getBody().getPlayerId());
+
+                    // Player is not online
+                    if (player == null) {
+                        return;
+                    }
+
+                    // Load player profile
+                    loadPlayer(player);
+                });
+            }
+        }, BEDROCK_PROFILE_UPDATE_CHANNEL);
     }
 
 
@@ -56,6 +82,25 @@ public class SyncManager {
         Bukkit.getScheduler().runTask(plugin, () -> profile.apply(player));
 
         plugin.getLogManager().debug("Applied player data.");
+    }
+
+    public void clearPlayer(UUID playerId) {
+        // Get player profile
+        final PlayerProfile profile = fetchPlayerProfile(playerId);
+
+        // No profile existing for player
+        if (profile == null) {
+            return;
+        }
+
+        // Clear data
+        profile.clear();
+
+        // Save profile
+        plugin.getPersistenceManager().savePlayerProfile(profile);
+
+        // Broadcast update
+        broadcastProfileUpdate(playerId, getServerGroup());
     }
 
 

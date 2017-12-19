@@ -1,6 +1,7 @@
 package bz.dcr.deinsync;
 
 import bz.dcr.bedrock.spigot.BedRockPlugin;
+import bz.dcr.dccore.DcCorePlugin;
 import bz.dcr.dccore.commons.db.Mongo;
 import bz.dcr.dccore.commons.db.codec.UUIDCodec;
 import bz.dcr.dccore.commons.db.codec.UUIDCodecProvider;
@@ -40,6 +41,8 @@ public class DeinSyncPlugin extends JavaPlugin {
 
     private ExecutorService executorService;
 
+    private DcCorePlugin dcCore;
+
     private LogManager logManager;
 
     private Mongo mongoDB;
@@ -56,6 +59,7 @@ public class DeinSyncPlugin extends JavaPlugin {
 
         logManager = new LogManager(this);
 
+        setupDcCore();
         loadBedRock();
         loadConfig();
         setupDatabase();
@@ -92,6 +96,18 @@ public class DeinSyncPlugin extends JavaPlugin {
         }
     }
 
+
+    private void setupDcCore() {
+        Plugin dcCorePlugin = getServer().getPluginManager().getPlugin("dcCore");
+
+        if (dcCorePlugin == null) {
+            getLogger().warning("Could not find dcCore!");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        dcCore = (DcCorePlugin) dcCorePlugin;
+    }
 
     private void loadBedRock() {
         final Plugin bedRockPlugin = getServer().getPluginManager().getPlugin("bedRock");
@@ -161,6 +177,10 @@ public class DeinSyncPlugin extends JavaPlugin {
 
     public ExecutorService getExecutorService() {
         return executorService;
+    }
+
+    public DcCorePlugin getDcCore() {
+        return dcCore;
     }
 
     public LogManager getLogManager() {

@@ -38,9 +38,6 @@ public class PersistenceManager {
             // Update existing document
             collection.replaceOne(Filters.eq("_id", profile.getId()), profile);
         }
-
-        // Broadcast profile update
-        plugin.getSyncManager().broadcastProfileUpdate(profile.getPlayerId(), plugin.getSyncManager().getServerGroup());
     }
 
 }
