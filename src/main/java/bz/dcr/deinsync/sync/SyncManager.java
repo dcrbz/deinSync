@@ -5,6 +5,7 @@ import bz.dcr.bedrock.common.pubsub.Message;
 import bz.dcr.bedrock.common.pubsub.MessageBuilder;
 import bz.dcr.deinsync.DeinSyncPlugin;
 import bz.dcr.deinsync.commons.message.MessageChannel;
+import bz.dcr.deinsync.commons.message.PlayerDeathMessage;
 import bz.dcr.deinsync.commons.message.PlayerProfileUpdateMessage;
 import bz.dcr.deinsync.config.ConfigKey;
 import bz.dcr.deinsync.player.PlayerProfile;
@@ -16,8 +17,6 @@ import org.bukkit.entity.Player;
 import java.util.UUID;
 
 public class SyncManager {
-
-    private static final String BEDROCK_PROFILE_UPDATE_CHANNEL = "DEINSYNC_PROFILE_UPDATE";
 
     private DeinSyncPlugin plugin;
 
@@ -46,7 +45,26 @@ public class SyncManager {
                     loadPlayer(player);
                 });
             }
-        }, BEDROCK_PROFILE_UPDATE_CHANNEL);
+        }, MessageChannel.PLAYER_PROFILE_UPDATE);
+
+        plugin.getBedRock().getRedis().subscribe(new BedRockSubscriber<PlayerDeathMessage>() {
+            @Override
+            public void onMessage(Message<PlayerDeathMessage> message) {
+                // Get player
+                final Player player = Bukkit.getPlayer(message.getBody().getPlayerId());
+
+                // Player is not online
+                if (player == null) {
+                    plugin.getLogger().warning("Received player death message but player was not online.");
+                    return;
+                }
+
+                // Load player profile
+                loadPlayer(player);
+
+                plugin.getLogger().warning("Received player death message.");
+            }
+        }, MessageChannel.PLAYER_DEATH);
     }
 
 
@@ -150,6 +168,21 @@ public class SyncManager {
         // Publish message
         plugin.getBedRock().getRedis().publish(message.getHeader().getChannel(), message);
     }
+
+    public void broadcastPlayerDeath(UUID playerId) {
+        PlayerDeathMessage body = new PlayerDeathMessage(playerId);
+        MessageBuilder<PlayerDeathMessage> builder = new MessageBuilder<>();
+        Message<PlayerDeathMessage> message = builder
+                .type(PlayerDeathMessage.class)
+                .channel(MessageChannel.PLAYER_DEATH)
+                .source(getServerId())
+                .global()
+                .body(body)
+                .build();
+
+        // Publish message
+        plugin.getBedRock().getRedis().publish(message.getHeader().getChannel(), message);
+     }
 
 
     public String getServerId() {

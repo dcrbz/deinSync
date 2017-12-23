@@ -1,7 +1,9 @@
 package bz.dcr.deinsync.listener;
 
 import bz.dcr.deinsync.DeinSyncPlugin;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -22,10 +24,15 @@ public class JoinQuitListener implements Listener {
                 plugin.getSyncManager().loadPlayer(event.getPlayer()));
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onQuit(PlayerQuitEvent event) {
-        plugin.getExecutorService().execute(() ->
-                plugin.getSyncManager().savePlayer(event.getPlayer()));
+        // Get player
+        final Player player = event.getPlayer();
+
+        plugin.getExecutorService().execute(() -> {
+            // Update player profile
+            plugin.getSyncManager().savePlayer(player);
+        });
     }
 
 
