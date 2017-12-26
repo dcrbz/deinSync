@@ -9,9 +9,14 @@ public class PersistenceManager {
 
     private DeinSyncPlugin plugin;
 
+    private MongoCollection<PlayerProfile> playerProfileCollection;
+
 
     public PersistenceManager(DeinSyncPlugin plugin) {
         this.plugin = plugin;
+
+        playerProfileCollection = plugin.getMongo().getMongoDatabase()
+                .getCollection(PlayerProfile.COLLECTION_NAME, PlayerProfile.class);
     }
 
 
@@ -28,15 +33,12 @@ public class PersistenceManager {
      * @param profile The {@link PlayerProfile} to save
      */
     private void savePlayerProfileDirectly(PlayerProfile profile) {
-        // Save profile
-        MongoCollection<PlayerProfile> collection = plugin.getMongo().getMongoDatabase().getCollection(PlayerProfile.COLLECTION_NAME, PlayerProfile.class);
-
-        if(profile.getId() == null) {
+        if (profile.getId() == null) {
             // Create new document
-            collection.insertOne(profile);
+            playerProfileCollection.insertOne(profile);
         } else {
             // Update existing document
-            collection.replaceOne(Filters.eq("_id", profile.getId()), profile);
+            playerProfileCollection.replaceOne(Filters.eq("_id", profile.getId()), profile);
         }
     }
 
