@@ -150,7 +150,7 @@ public class DeinSyncPlugin extends JavaPlugin {
 
         final MongoClientURI uri = new MongoClientURI(
                 getConfig().getString(ConfigKey.MONGODB_URI),
-                MongoClientOptions.builder().codecRegistry(registry)
+                MongoClientOptions.builder().codecRegistry(registry).threadsAllowedToBlockForConnectionMultiplier(10)
         );
 
         try {

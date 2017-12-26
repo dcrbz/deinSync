@@ -12,7 +12,7 @@ public class InventoryPacketListener extends PacketAdapter {
 
 
     public InventoryPacketListener(DeinSyncPlugin plugin) {
-        super(plugin, ListenerPriority.NORMAL, PacketType.Play.Server.WINDOW_ITEMS, PacketType.Play.Server.SET_SLOT);
+        super(plugin, ListenerPriority.NORMAL, PacketType.Play.Server.SET_SLOT);
         this.plugin = plugin;
     }
 
@@ -28,4 +28,5 @@ public class InventoryPacketListener extends PacketAdapter {
         plugin.getExecutorService().execute(() ->
                 plugin.getSyncManager().savePlayer(event.getPlayer()));
     }
+
 }
