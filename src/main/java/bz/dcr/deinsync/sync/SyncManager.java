@@ -55,14 +55,14 @@ public class SyncManager {
 
                 // Player is not online
                 if (player == null) {
-                    plugin.getLogger().warning("Received player death message but player was not online.");
+                    plugin.getLogManager().debug("Received player death message but player was not online.");
                     return;
                 }
 
                 // Load player profile
                 loadPlayer(player);
 
-                plugin.getLogger().warning("Received player death message.");
+                plugin.getLogManager().debug("Received player death message.");
             }
         }, MessageChannel.PLAYER_DEATH);
     }
