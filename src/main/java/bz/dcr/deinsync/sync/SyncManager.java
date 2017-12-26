@@ -3,10 +3,9 @@ package bz.dcr.deinsync.sync;
 import bz.dcr.bedrock.common.pubsub.BedRockSubscriber;
 import bz.dcr.bedrock.common.pubsub.Message;
 import bz.dcr.bedrock.common.pubsub.MessageBuilder;
-import bz.dcr.bedrock.common.pubsub.messages.BungeeCordJoinEvent;
-import bz.dcr.bedrock.common.pubsub.messages.ServerJoinEvent;
 import bz.dcr.deinsync.DeinSyncPlugin;
 import bz.dcr.deinsync.commons.message.MessageChannel;
+import bz.dcr.deinsync.commons.message.PlayerDeathMessage;
 import bz.dcr.deinsync.commons.message.PlayerProfileUpdateMessage;
 import bz.dcr.deinsync.config.ConfigKey;
 import bz.dcr.deinsync.player.PlayerProfile;
@@ -15,90 +14,66 @@ import com.mongodb.client.model.Filters;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 public class SyncManager {
 
     private DeinSyncPlugin plugin;
 
-    private Set<UUID> pendingLogins;
-
 
     public SyncManager(DeinSyncPlugin plugin) {
         this.plugin = plugin;
-        this.pendingLogins = new HashSet<>();
+
+        registerMessageListeners();
     }
 
 
-    public void initSubscribers() {
-        // Subscribe to player profile updates
+    private void registerMessageListeners() {
         plugin.getBedRock().getRedis().subscribe(new BedRockSubscriber<PlayerProfileUpdateMessage>() {
             @Override
             public void onMessage(Message<PlayerProfileUpdateMessage> message) {
-                plugin.getLogManager().debug("Received PlayerProfileUpdateMessage");
-
-                // Wrong server group
-                if(!message.getBody().getGroup().equals(getServerGroup())) {
-                    plugin.getLogManager().debug("Received profile update but group was invalid (" + message.getBody().getGroup() + ").");
-                    return;
-                }
-
-                // Run synchronously
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     // Get player
                     final Player player = Bukkit.getPlayer(message.getBody().getPlayerId());
 
-                    // Player not online
-                    if(player == null) {
-                        plugin.getLogManager().debug("The player " + message.getBody().getPlayerId().toString() + " is currently not online.");
+                    // Player is not online
+                    if (player == null) {
                         return;
                     }
 
-                    // Load profile and apply to player
+                    // Load player profile
                     loadPlayer(player);
-
-                    plugin.getLogManager().debug("Successfully loaded data of " + message.getBody().getPlayerId().toString() + "!");
                 });
             }
         }, MessageChannel.PLAYER_PROFILE_UPDATE);
 
-        // Subscribe to BungeeCord join event
-        plugin.getBedRock().getRedis().subscribe(new BedRockSubscriber<BungeeCordJoinEvent>() {
+        plugin.getBedRock().getRedis().subscribe(new BedRockSubscriber<PlayerDeathMessage>() {
             @Override
-            public void onMessage(Message<BungeeCordJoinEvent> message) {
-                plugin.getLogManager().debug("Player " + message.getBody().getPlayerId().toString() + " joined Proxy!");
-                pendingLogins.add(message.getBody().getPlayerId());
-            }
-        }, bz.dcr.bedrock.common.pubsub.MessageChannel.BUNGEECORD_JOIN_QUIT);
+            public void onMessage(Message<PlayerDeathMessage> message) {
+                // Get player
+                final Player player = Bukkit.getPlayer(message.getBody().getPlayerId());
 
-        // Subscribe to server join event
-        plugin.getBedRock().getRedis().subscribe(new BedRockSubscriber<ServerJoinEvent>() {
-            @Override
-            public void onMessage(Message<ServerJoinEvent> message) {
-                plugin.getLogManager().debug("Player " + message.getBody().getPlayerId().toString() + " joined server!");
-
-                // Player joined on other server
-                if(Bukkit.getPlayer(message.getBody().getPlayerId()) == null) {
-                    pendingLogins.remove(message.getBody().getPlayerId());
+                // Player is not online
+                if (player == null) {
+                    plugin.getLogManager().debug("Received player death message but player was not online.");
+                    return;
                 }
+
+                // Load player profile
+                loadPlayer(player);
+
+                plugin.getLogManager().debug("Received player death message.");
             }
-        }, bz.dcr.bedrock.common.pubsub.MessageChannel.SERVER_JOIN_QUIT);
-    }
-
-    public void startSaveTask() {
-        final Long interval = plugin.getConfig().getLong(ConfigKey.DEINSYNC_SAVE_INTERVAL);
-
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
-            plugin.getLogManager().info("Saving " + Bukkit.getOnlinePlayers().size() + " players...");
-            Bukkit.getOnlinePlayers().forEach(this::savePlayer);
-            plugin.getLogManager().info("Saved " + Bukkit.getOnlinePlayers().size() + " players.");
-        }, interval, interval);
+        }, MessageChannel.PLAYER_DEATH);
     }
 
 
     public void savePlayer(Player player) {
+        // Player is locked
+        if (player.hasMetadata(DeinSyncPlugin.LOCK_PLAYER_TAG)) {
+            return;
+        }
+
         PlayerProfile profile = fetchPlayerProfile(player.getUniqueId());
 
         if(profile != null) {
@@ -118,10 +93,32 @@ public class SyncManager {
     public void loadPlayer(Player player) {
         plugin.getLogManager().debug("Loading player...");
 
+        // Get player profile
         final PlayerProfile profile = fetchOrCreatePlayerProfile(player);
-        profile.apply(player);
+
+        // Apply profile to player
+        Bukkit.getScheduler().runTask(plugin, () -> profile.apply(player));
 
         plugin.getLogManager().debug("Applied player data.");
+    }
+
+    public void clearPlayer(UUID playerId) {
+        // Get player profile
+        final PlayerProfile profile = fetchPlayerProfile(playerId);
+
+        // No profile existing for player
+        if (profile == null) {
+            return;
+        }
+
+        // Clear data
+        profile.clear();
+
+        // Save profile
+        plugin.getPersistenceManager().savePlayerProfile(profile);
+
+        // Broadcast update
+        broadcastProfileUpdate(playerId, getServerGroup());
     }
 
 
@@ -172,9 +169,20 @@ public class SyncManager {
         plugin.getBedRock().getRedis().publish(message.getHeader().getChannel(), message);
     }
 
-    public boolean checkAndDeletePendingLogin(UUID uuid) {
-        return pendingLogins.remove(uuid);
-    }
+    public void broadcastPlayerDeath(UUID playerId) {
+        PlayerDeathMessage body = new PlayerDeathMessage(playerId);
+        MessageBuilder<PlayerDeathMessage> builder = new MessageBuilder<>();
+        Message<PlayerDeathMessage> message = builder
+                .type(PlayerDeathMessage.class)
+                .channel(MessageChannel.PLAYER_DEATH)
+                .source(getServerId())
+                .global()
+                .body(body)
+                .build();
+
+        // Publish message
+        plugin.getBedRock().getRedis().publish(message.getHeader().getChannel(), message);
+     }
 
 
     public String getServerId() {
@@ -183,10 +191,6 @@ public class SyncManager {
 
     public String getServerGroup() {
         return plugin.getConfig().getString(ConfigKey.DEINSYNC_SERVER_GROUP);
-    }
-
-    public Set<UUID> getPendingLogins() {
-        return pendingLogins;
     }
 
 }

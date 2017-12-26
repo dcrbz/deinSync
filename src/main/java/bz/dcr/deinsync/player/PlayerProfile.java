@@ -201,6 +201,28 @@ public class PlayerProfile {
         player.updateInventory();
     }
 
+    public void clear() {
+        // Clear inventory
+        if (getInventory() != null) {
+            getInventory().clear();
+        }
+
+        // Clear potion effects
+        potionEffects.clear();
+
+        setHealth(20.0D);
+        setHealthScaled(false);
+        setHealthScale(20.0D);
+        setFoodLevel(20);
+        setSaturation(14.4F);
+        setExhaustion(0.0F);
+        setExp(0.0F);
+        setLevel(0);
+        setFlySpeed(1.0F);
+        setFireTicks(0);
+        setGameMode(GameMode.SURVIVAL);
+    }
+
 
     public static PlayerProfile update(Player player, String group, PlayerProfile profile) {
         profile.setPlayerId(player.getUniqueId());

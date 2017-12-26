@@ -2,7 +2,7 @@ name: deinSync
 authors: [leNic]
 version: ${project.version}
 main: bz.dcr.deinsync.DeinSyncPlugin
-depend: [bedRock, dcCore]
+depend: [dcCore, ProtocolLib]
 commands:
   deinsync:
     aliases: [ds, sync]

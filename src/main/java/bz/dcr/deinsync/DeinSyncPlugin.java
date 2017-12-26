@@ -1,6 +1,7 @@
 package bz.dcr.deinsync;
 
 import bz.dcr.bedrock.spigot.BedRockPlugin;
+import bz.dcr.dccore.DcCorePlugin;
 import bz.dcr.dccore.commons.db.Mongo;
 import bz.dcr.dccore.commons.db.codec.UUIDCodec;
 import bz.dcr.dccore.commons.db.codec.UUIDCodecProvider;
@@ -13,12 +14,16 @@ import bz.dcr.deinsync.config.ConfigKey;
 import bz.dcr.deinsync.db.codec.PlayerInventoryCodec;
 import bz.dcr.deinsync.db.codec.PlayerInventoryCodecProvider;
 import bz.dcr.deinsync.db.codec.PlayerProfileCodecProvider;
-import bz.dcr.deinsync.listener.JoinListener;
+import bz.dcr.deinsync.listener.DeathListener;
+import bz.dcr.deinsync.listener.JoinQuitListener;
 import bz.dcr.deinsync.listener.LockListener;
-import bz.dcr.deinsync.listener.QuitListener;
+import bz.dcr.deinsync.listener.packet.*;
+import bz.dcr.deinsync.logging.DropListener;
 import bz.dcr.deinsync.logging.LogManager;
 import bz.dcr.deinsync.sync.PersistenceManager;
 import bz.dcr.deinsync.sync.SyncManager;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
@@ -28,9 +33,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class DeinSyncPlugin extends JavaPlugin {
 
     public static final String LOCK_PLAYER_TAG = "deinsync_locked";
+
+    private ExecutorService executorService;
+
+    private DcCorePlugin dcCore;
 
     private LogManager logManager;
 
@@ -39,28 +51,32 @@ public class DeinSyncPlugin extends JavaPlugin {
     private PersistenceManager persistenceManager;
     private BedRockPlugin bedRock;
 
+    private ProtocolManager protocolManager;
+
 
     @Override
     public void onEnable() {
+        executorService = Executors.newCachedThreadPool();
+
         logManager = new LogManager(this);
 
+        setupDcCore();
         loadBedRock();
         loadConfig();
         setupDatabase();
+        setupPacketManager();
 
         syncManager = new SyncManager(this);
-        syncManager.initSubscribers();
-        syncManager.startSaveTask();
         persistenceManager = new PersistenceManager(this);
-        persistenceManager.addWorkers(getConfig().getInt(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS));
 
         // Register event listeners
-        getServer().getPluginManager().registerEvents(new JoinListener(this), this);
-        getServer().getPluginManager().registerEvents(new QuitListener(this), this);
+        getServer().getPluginManager().registerEvents(new JoinQuitListener(this), this);
+        getServer().getPluginManager().registerEvents(new DropListener(this), this);
+        getServer().getPluginManager().registerEvents(new DeathListener(this), this);
 
         // Register lock listener
         if (getConfig().getBoolean(ConfigKey.DEINSYNC_SECURITY_LOCK_ENABLED)) {
-            getServer().getPluginManager().registerEvents(new LockListener(), this);
+            getServer().getPluginManager().registerEvents(new LockListener(this), this);
         }
 
         // Register deinSync command
@@ -69,13 +85,12 @@ public class DeinSyncPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        getLogger().info("Saving players...");
+
         // Save profiles of all remaining players
         Bukkit.getOnlinePlayers().forEach(player -> getSyncManager().savePlayer(player));
 
-        // Save remaining profiles and wait for workers to finish
-        if(persistenceManager != null) {
-            persistenceManager.close();
-        }
+        getLogger().info("Successfully saved players.");
 
         // Disconnect from database
         if(mongoDB != null) {
@@ -83,6 +98,18 @@ public class DeinSyncPlugin extends JavaPlugin {
         }
     }
 
+
+    private void setupDcCore() {
+        Plugin dcCorePlugin = getServer().getPluginManager().getPlugin("dcCore");
+
+        if (dcCorePlugin == null) {
+            getLogger().warning("Could not find dcCore!");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        dcCore = (DcCorePlugin) dcCorePlugin;
+    }
 
     private void loadBedRock() {
         final Plugin bedRockPlugin = getServer().getPluginManager().getPlugin("bedRock");
@@ -104,8 +131,6 @@ public class DeinSyncPlugin extends JavaPlugin {
         getConfig().addDefault(ConfigKey.DEINSYNC_SERVER_ID, "server_" + getServer().getPort());
         getConfig().addDefault(ConfigKey.DEINSYNC_SERVER_GROUP, "main");
         getConfig().addDefault(ConfigKey.MONGODB_URI, "mongodb://127.0.0.1:27017/" + getName().toLowerCase());
-        getConfig().addDefault(ConfigKey.DEINSYNC_SAVE_WORKER_THREADS, 2);
-        getConfig().addDefault(ConfigKey.DEINSYNC_SAVE_INTERVAL, 6000);
         getConfig().addDefault(ConfigKey.DEINSYNC_SECURITY_LOCK_ENABLED, true);
         getConfig().addDefault(ConfigKey.DEINSYNC_SECURITY_LOCK_DURATION, 40);
         getConfig().addDefault(ConfigKey.DEINSYNC_DEBUG, false);
@@ -125,7 +150,7 @@ public class DeinSyncPlugin extends JavaPlugin {
 
         final MongoClientURI uri = new MongoClientURI(
                 getConfig().getString(ConfigKey.MONGODB_URI),
-                MongoClientOptions.builder().codecRegistry(registry)
+                MongoClientOptions.builder().codecRegistry(registry).threadsAllowedToBlockForConnectionMultiplier(10)
         );
 
         try {
@@ -141,6 +166,24 @@ public class DeinSyncPlugin extends JavaPlugin {
         }
     }
 
+    private void setupPacketManager() {
+        protocolManager = ProtocolLibrary.getProtocolManager();
+
+        protocolManager.addPacketListener(new EntityEffectPacketListener(this));
+        protocolManager.addPacketListener(new ExperiencePacketListener(this));
+        protocolManager.addPacketListener(new HealthPacketListener(this));
+        protocolManager.addPacketListener(new InventoryPacketListener(this));
+        protocolManager.addPacketListener(new GameModePacketListener(this));
+    }
+
+
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
+
+    public DcCorePlugin getDcCore() {
+        return dcCore;
+    }
 
     public LogManager getLogManager() {
         return logManager;
@@ -160,6 +203,10 @@ public class DeinSyncPlugin extends JavaPlugin {
 
     public PersistenceManager getPersistenceManager() {
         return persistenceManager;
+    }
+
+    public ProtocolManager getProtocolManager() {
+        return protocolManager;
     }
 
 }

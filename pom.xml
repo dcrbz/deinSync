@@ -6,7 +6,7 @@
 
     <groupId>bz.dcr</groupId>
     <artifactId>deinsync</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.5</version>
 
     <repositories>
         <!-- deinCraft Repository -->
@@ -29,7 +29,7 @@
         <dependency>
             <groupId>bz.dcr</groupId>
             <artifactId>dccore-spigot</artifactId>
-            <version>1.0.15</version>
+            <version>1.0.16</version>
             <scope>provided</scope>
         </dependency>
 
@@ -38,6 +38,14 @@
             <groupId>bz.dcr</groupId>
             <artifactId>bedrock-spigot</artifactId>
             <version>1.0.4</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- ProtocolLib -->
+        <dependency>
+            <groupId>com.comphenix.protocol</groupId>
+            <artifactId>ProtocolLib-API</artifactId>
+            <version>4.3.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

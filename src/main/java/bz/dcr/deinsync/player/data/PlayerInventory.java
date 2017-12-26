@@ -78,6 +78,26 @@ public class PlayerInventory {
         player.getInventory().setItemInOffHand(offHandItem);
     }
 
+    public void clear() {
+        for (int i = 0; i < armorItems.length; i++) {
+            armorItems[i] = null;
+        }
+
+        for (int i = 0; i < mainInventoryItems.length; i++) {
+            mainInventoryItems[i] = null;
+        }
+
+        for (int i = 0; i < mainInventoryItems.length; i++) {
+            mainInventoryItems[i] = null;
+        }
+
+        for (int i = 0; i < mainInventoryItems.length; i++) {
+            mainInventoryItems[i] = null;
+        }
+
+        offHandItem = null;
+    }
+
 
     public static PlayerInventory fromPlayer(Player player) {
         return new PlayerInventory(
