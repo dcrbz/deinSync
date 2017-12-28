@@ -23,4 +23,5 @@ public class ExperiencePacketListener extends PacketAdapter {
         plugin.getExecutorService().execute(() ->
                 plugin.getSyncManager().savePlayer(event.getPlayer()));
     }
+
 }

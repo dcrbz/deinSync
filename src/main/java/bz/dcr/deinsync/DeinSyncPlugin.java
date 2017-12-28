@@ -56,8 +56,6 @@ public class DeinSyncPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        executorService = Executors.newCachedThreadPool();
-
         logManager = new LogManager(this);
 
         setupDcCore();
@@ -65,6 +63,8 @@ public class DeinSyncPlugin extends JavaPlugin {
         loadConfig();
         setupDatabase();
         setupPacketManager();
+
+        executorService = Executors.newFixedThreadPool(getConfig().getInt(ConfigKey.DEINSYNC_WORKER_THREADS));
 
         syncManager = new SyncManager(this);
         persistenceManager = new PersistenceManager(this);
@@ -128,9 +128,10 @@ public class DeinSyncPlugin extends JavaPlugin {
     }
 
     private void loadConfig() {
+        getConfig().addDefault(ConfigKey.MONGODB_URI, "mongodb://127.0.0.1:27017/" + getName().toLowerCase());
         getConfig().addDefault(ConfigKey.DEINSYNC_SERVER_ID, "server_" + getServer().getPort());
         getConfig().addDefault(ConfigKey.DEINSYNC_SERVER_GROUP, "main");
-        getConfig().addDefault(ConfigKey.MONGODB_URI, "mongodb://127.0.0.1:27017/" + getName().toLowerCase());
+        getConfig().addDefault(ConfigKey.DEINSYNC_WORKER_THREADS, 2);
         getConfig().addDefault(ConfigKey.DEINSYNC_SECURITY_LOCK_ENABLED, true);
         getConfig().addDefault(ConfigKey.DEINSYNC_SECURITY_LOCK_DURATION, 40);
         getConfig().addDefault(ConfigKey.DEINSYNC_DEBUG, false);
@@ -150,7 +151,7 @@ public class DeinSyncPlugin extends JavaPlugin {
 
         final MongoClientURI uri = new MongoClientURI(
                 getConfig().getString(ConfigKey.MONGODB_URI),
-                MongoClientOptions.builder().codecRegistry(registry).threadsAllowedToBlockForConnectionMultiplier(10)
+                MongoClientOptions.builder().codecRegistry(registry).connectionsPerHost(200)
         );
 
         try {
