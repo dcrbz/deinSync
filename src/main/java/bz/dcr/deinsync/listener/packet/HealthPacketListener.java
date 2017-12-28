@@ -23,4 +23,5 @@ public class HealthPacketListener extends PacketAdapter {
         plugin.getExecutorService().execute(() ->
                 plugin.getSyncManager().savePlayer(event.getPlayer()));
     }
+
 }

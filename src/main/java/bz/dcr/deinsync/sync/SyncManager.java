@@ -20,11 +20,16 @@ public class SyncManager {
 
     private DeinSyncPlugin plugin;
 
+    private MongoCollection<PlayerProfile> playerProfileCollection;
+
 
     public SyncManager(DeinSyncPlugin plugin) {
         this.plugin = plugin;
 
         registerMessageListeners();
+
+        playerProfileCollection = plugin.getMongo().getMongoDatabase()
+                .getCollection(PlayerProfile.COLLECTION_NAME, PlayerProfile.class);
     }
 
 
@@ -136,17 +141,12 @@ public class SyncManager {
     }
 
     public PlayerProfile fetchPlayerProfile(UUID playerId) {
-        final MongoCollection<PlayerProfile> collection = plugin.getMongo().getMongoDatabase()
-                .getCollection(PlayerProfile.COLLECTION_NAME, PlayerProfile.class);
-
-        final PlayerProfile profile = collection.find(
+        return playerProfileCollection.find(
                 Filters.and(
                         Filters.eq("playerId", playerId.toString()),
                         Filters.eq("group", getServerGroup())
                 )
-        ).first();
-
-        return profile;
+        ).limit(1).first();
     }
 
     public PlayerProfile createPlayerProfile(Player player) {
