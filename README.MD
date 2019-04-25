@@ -2,6 +2,11 @@
 
 deinSync synchronizes player inventories and statistics between servers.
 
+### Features
+- Server groups (different inventories on specific servers)
+- Lock players while loading their data
+- Version independent
+
 deinSync will immediately write any changes to a player's inventory to the database.
 Unlike various other approaches, this one has established. deinSync is most likely the most
 reliable inventory synchronization plugin out there. On the other side it can cause
