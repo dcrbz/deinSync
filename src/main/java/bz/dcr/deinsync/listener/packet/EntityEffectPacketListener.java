@@ -23,5 +23,5 @@ public class EntityEffectPacketListener extends PacketAdapter {
         plugin.getExecutorService().execute(() ->
                 plugin.getSyncManager().savePlayer(event.getPlayer()));
     }
-    
+
 }

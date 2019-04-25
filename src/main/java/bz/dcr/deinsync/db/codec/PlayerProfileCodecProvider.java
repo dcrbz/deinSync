@@ -25,7 +25,7 @@ public class PlayerProfileCodecProvider implements CodecProvider {
 
     @Override
     public <T> Codec<T> get(Class<T> clazz, CodecRegistry registry) {
-        if(clazz == PlayerProfile.class) {
+        if (clazz == PlayerProfile.class) {
             return (Codec<T>) new PlayerProfileCodec(uuidCodec, playerInventoryCodec, potionEffectCodec);
         }
 

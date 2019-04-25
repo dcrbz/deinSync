@@ -22,6 +22,7 @@ public class PersistenceManager {
 
     /**
      * Add {@link PlayerProfile} to saving queue
+     *
      * @param profile The {@link PlayerProfile} to save
      */
     public void savePlayerProfile(PlayerProfile profile) {
@@ -30,6 +31,7 @@ public class PersistenceManager {
 
     /**
      * Save {@link PlayerProfile} to database
+     *
      * @param profile The {@link PlayerProfile} to save
      */
     private void savePlayerProfileDirectly(PlayerProfile profile) {

@@ -93,7 +93,7 @@ public class DeinSyncPlugin extends JavaPlugin {
         getLogger().info("Successfully saved players.");
 
         // Disconnect from database
-        if(mongoDB != null) {
+        if (mongoDB != null) {
             mongoDB.disconnect();
         }
     }
@@ -115,7 +115,7 @@ public class DeinSyncPlugin extends JavaPlugin {
         final Plugin bedRockPlugin = getServer().getPluginManager().getPlugin("bedRock");
 
         // bedRock is not installed
-        if(bedRockPlugin == null) {
+        if (bedRockPlugin == null) {
             getLogManager().warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             getLogManager().warning("! Could not find bedRock! Disabling deinSync... !");
             getLogManager().warning("! INVENTORIES WILL NOT BE SYNCHRONIZED          !");

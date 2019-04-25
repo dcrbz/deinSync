@@ -22,7 +22,7 @@ public class DeinSyncCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         // Sender is not a player
-        if(!(sender instanceof Player)) {
+        if (!(sender instanceof Player)) {
             sender.sendMessage(ChatColor.RED + "This command can only be run as a player!");
             return true;
         }
@@ -30,7 +30,7 @@ public class DeinSyncCommand implements CommandExecutor {
         final Player player = (Player) sender;
 
         // Update command
-        if(args.length == 1 && args[0].equalsIgnoreCase("update")) {
+        if (args.length == 1 && args[0].equalsIgnoreCase("update")) {
             // Player has no permission
             if (!player.hasPermission("deinsync.update")) {
                 player.sendMessage("§cDu hast keine Berechtigung dafür.");
@@ -43,7 +43,7 @@ public class DeinSyncCommand implements CommandExecutor {
         }
 
         // Open command
-        if(args.length == 2 && args[0].equalsIgnoreCase("open")) {
+        if (args.length == 2 && args[0].equalsIgnoreCase("open")) {
             return true;
         }
 

@@ -18,7 +18,7 @@ public class PlayerInventoryCodecProvider implements CodecProvider {
 
     @Override
     public <T> Codec<T> get(Class<T> clazz, CodecRegistry registry) {
-        if(clazz == PlayerInventory.class) {
+        if (clazz == PlayerInventory.class) {
             return (Codec<T>) new PlayerInventoryCodec(itemStackCodec);
         }
 

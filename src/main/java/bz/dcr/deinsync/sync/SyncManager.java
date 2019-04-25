@@ -81,7 +81,7 @@ public class SyncManager {
 
         PlayerProfile profile = fetchPlayerProfile(player.getUniqueId());
 
-        if(profile != null) {
+        if (profile != null) {
             // Update existing profile
             plugin.getLogManager().debug("Updating existing profile of " + player.getUniqueId().toString() + "...");
             profile = PlayerProfile.update(player, getServerGroup(), profile);
@@ -130,7 +130,7 @@ public class SyncManager {
     public PlayerProfile fetchOrCreatePlayerProfile(Player player) {
         PlayerProfile profile = fetchPlayerProfile(player.getUniqueId());
 
-        if(profile != null) {
+        if (profile != null) {
             plugin.getLogManager().debug("Found player profile of " + player.getUniqueId().toString() + ".");
         } else {
             plugin.getLogManager().debug("Creating new profile for " + player.getUniqueId().toString() + "...");
@@ -182,7 +182,7 @@ public class SyncManager {
 
         // Publish message
         plugin.getBedRock().getRedis().publish(message.getHeader().getChannel(), message);
-     }
+    }
 
 
     public String getServerId() {

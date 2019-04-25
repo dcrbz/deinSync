@@ -62,10 +62,10 @@ public class PlayerInventoryCodec implements Codec<PlayerInventory> {
     public void encode(BsonWriter writer, PlayerInventory inventory, EncoderContext encoderContext) {
         writer.writeStartDocument();
 
-        writeItemStackArray(writer, inventory.getArmorItems(),  encoderContext,"armorItems");
-        writeItemStackArray(writer, inventory.getMainInventoryItems(),  encoderContext,"mainInventoryItems");
-        writeItemStackArray(writer, inventory.getExtraContents(),  encoderContext,"extraContents");
-        writeItemStackArray(writer, inventory.getEnderChestContents(),  encoderContext,"enderChestContents");
+        writeItemStackArray(writer, inventory.getArmorItems(), encoderContext, "armorItems");
+        writeItemStackArray(writer, inventory.getMainInventoryItems(), encoderContext, "mainInventoryItems");
+        writeItemStackArray(writer, inventory.getExtraContents(), encoderContext, "extraContents");
+        writeItemStackArray(writer, inventory.getEnderChestContents(), encoderContext, "enderChestContents");
         writeItemStack(writer, inventory.getOffHandItem(), encoderContext, "offHandItem");
 
         writer.writeEndDocument();
@@ -92,7 +92,7 @@ public class PlayerInventoryCodec implements Codec<PlayerInventory> {
 
         reader.readName(name);
         reader.readStartArray();
-        while(reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             items.add(readItemStack(reader, decoderContext));
         }
         reader.readEndArray();
