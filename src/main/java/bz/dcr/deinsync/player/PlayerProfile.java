@@ -175,29 +175,17 @@ public class PlayerProfile {
 
         player.getActivePotionEffects().forEach(pe -> player.removePotionEffect(pe.getType()));
         player.addPotionEffects(getPotionEffects());
-
         player.setHealth(getHealth());
-
         player.setHealthScaled(getHealthScaled());
-
         player.setHealthScale(getHealthScale());
-
         player.setFoodLevel(getFoodLevel());
-
         player.setSaturation(getSaturation());
-
         player.setExhaustion(getExhaustion());
-
         player.setLevel(getLevel());
-
         player.setExp(getExp());
-
         player.setFlySpeed(getFlySpeed());
-
         player.setFireTicks(getFireTicks());
-
         player.setGameMode(getGameMode());
-
         player.updateInventory();
     }
 
